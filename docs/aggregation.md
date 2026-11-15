@@ -1,53 +1,32 @@
-# MongoDB aggregation
+## Instructor analytics (`instructorAnalytics.js`)
 
-All analytics numbers are computed inside MongoDB with aggregation pipelines. The API never loads
-documents into JavaScript to add them up. The code lives in `server/aggregations/`
-(`adminAnalytics.js`, `instructorAnalytics.js`, `monthSeries.js`).
+Every pipeline starts by selecting the logged-in instructor's own courses (`$match` on
+`instructor`, or the instructor's course ids from `Course.distinct`), so one instructor can never
+see another instructor's numbers.
 
-## Platform overview (`overviewStats`)
+### Overview (`overviewStats`)
 
-One round trip per collection, using `$facet` to compute several results from a single scan:
+Two aggregations run in parallel (`Promise.all`):
 
-| Collection | Facets | Stages |
+| Source | Stages | Result |
 |---|---|---|
-| `users` | users by role, total, joined in the last 30 days | `$group`, `$count`, `$match` |
-| `courses` | courses by status, total, weighted average rating | `$group`, `$count`, `$match`, `$project`, `$cond`, `$round` |
-| `enrollments` | totals (count, revenue, completed, completion rate), last 30 days | `$group`, `$match`, `$project`, `$cond`, `$round` |
+| `courses` | `$match` (own courses), then `$facet` with `byStatus` (`$group`), `total` (`$count`) and `ratings` (`$match` approved, `$group`, `$project` with `$cond` and `$round`) | Course counts by status, weighted average rating, review count |
+| `enrollments` | `$match` (`course` in own course ids), `$group` by `student`, `$group` again into totals, `$project` | Unique students, enrolments, revenue, completed enrolments, completion rate |
 
-The three collections are queried in parallel with `Promise.all`.
-The platform average rating is weighted: sum of `averageRating * reviewCount` divided by the total
-review count, over approved courses only.
-A course counts as completed when `completedAt` has BSON type `date` (`$type`).
+Unique students are counted without building a big array: the first `$group` makes one row per
+student, and the second `$group` counts those rows. The completion rate is
+`completed / enrolments * 100`, rounded, and is 0 when there are no enrolments.
 
-## Top courses (`topCourses`)
+### Per-course numbers (`courseStats`)
 
-1. `$match` approved courses (and `reviewCount > 0` when ranking by rating).
-2. `$lookup` into `enrollments` with a sub-pipeline that `$group`s enrolments and revenue per
-   course, so the join returns one small row, not every enrolment.
-3. `$unwind` with `preserveNullAndEmptyArrays` and `$addFields` with `$ifNull`, so courses with no
-   enrolments still appear with zero.
-4. `$sort` (with `_id` as the last key so ties are stable) and `$limit`.
-5. Only after the limit, a second `$lookup` into `users` that projects just the instructor's name.
-   This runs for at most `limit` rows, and the email and password hash never enter the pipeline.
+`$match` own courses, then a `$lookup` with a sub-pipeline that `$group`s each course's
+enrolments into students, revenue and completed. The result is `$unwind`ed with
+`preserveNullAndEmptyArrays`, so a course with no students still appears with zeros, then
+`$project` (with `$ifNull`), `$addFields` for the completion rate, and `$sort` by revenue, then
+students, then `_id` (a stable order).
 
-## Top instructors (`topInstructors`)
+### Monthly series (`monthlyStats`)
 
-`$group` enrolments by course, `$lookup` each course's instructor, `$group` again by instructor
-(summing enrolments and revenue and counting courses), then `$sort`, `$limit` and a name `$lookup`.
-
-## Monthly series (`monthlyStats`)
-
-`$match` on `createdAt >= start of window`, then `$group` by a `YYYY-MM` key
-(`monthKey` in `monthSeries.js`). `monthWindow` builds the list of month labels, and the code fills
-months with no data with zeros so the chart has no gaps. Users and enrolments are aggregated in
-parallel.
-
-## Instructor analytics
-
-*(to be completed from `instructorAnalytics.js`)*
-
-## Why aggregation and not JavaScript
-
-- The database does the grouping, so only the final small result crosses the network.
-- `$facet` and `$lookup` sub-pipelines avoid loading all enrolments into memory.
-- Sorting and limiting happen before expensive joins.
+`$match` own courses' enrolments from the start of the window, `$group` by `YYYY-MM`
+(`$dateToString`, UTC), `$sort`. Months with no enrolments are added with zeros afterwards, only
+so the chart has no gaps. The numbers themselves come from the database.
