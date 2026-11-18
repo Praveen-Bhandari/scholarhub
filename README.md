@@ -3,7 +3,7 @@
 An online course platform (Project 2, MERN stack). Instructors build and publish courses, admins
 review them, and students enrol, learn and earn certificates.
 
-**Live:** `<frontend URL>` (client) and `<backend URL>` (API).
+**Live:** [https://scholarhub-plum.vercel.app](https://scholarhub-plum.vercel.app) (client) and [https://scholarhub-ga1s.onrender.com](https://scholarhub-ga1s.onrender.com) (API).
 
 ## Stack
 
