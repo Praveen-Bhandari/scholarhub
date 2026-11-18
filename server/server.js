@@ -34,6 +34,9 @@ app.use(
 app.use("/api", apiLimiter);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
+app.get("/", (req, res) =>
+  res.json({ name: "ScholarHub API", status: "ok", health: "/api/health", courses: "/api/courses" })
+);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
