@@ -74,8 +74,8 @@ All of these require the `instructor` role.
 | POST | `/courses` | Instructor | Body: `title` (max 120), `description` (max 5000), `category`, optional `level`, `price` (>= 0). `status` and `instructor` in the body are ignored: status is always `draft` and the owner is the logged-in user |
 | GET | `/courses/mine` | Instructor | The instructor's own courses |
 | GET | `/courses/mine/:id` | Instructor (owner) | One own course with sections, lessons and attachments. Returns `{ course }` |
-| PUT | `/courses/:id` | Instructor (owner) | Same fields as create, all optional. 409 while the course is submitted or approved |
-| DELETE | `/courses/:id` | Instructor (owner) | 409 for an approved course |
+| PUT | `/courses/:id` | Instructor (owner) | Same fields as create, all optional. 409 while the course is submitted. Editing a rejected course moves it back to draft |
+| DELETE | `/courses/:id` | Instructor (owner) | Only draft or rejected courses; 409 otherwise |
 | POST | `/courses/:id/submit` | Instructor (owner) | `draft` or `rejected` to `submitted`. 400 if the course has no lesson, 409 if already submitted or approved |
 
 `/courses/mine` is declared before `/courses/:id` so that "mine" is not read as an id.
@@ -102,7 +102,7 @@ request never stores a file. The server validates the file type and size.
 |---|---|---|
 | PUT | `/courses/:id/thumbnail` | `multipart/form-data`, field `thumbnail`, image only, max 2 MB. Replaces the old one |
 | DELETE | `/courses/:id/thumbnail` | Removes it |
-| POST | `/courses/:id/sections/:sectionId/lessons/:lessonId/attachments` | `multipart/form-data`, field `file`, allowed types are checked by the server, max 10 MB |
+| POST | `/courses/:id/sections/:sectionId/lessons/:lessonId/attachments` | `multipart/form-data`, field `file`, jpeg, png, webp, pdf or zip, max 10 MB, at most 5 per lesson (409 after that). The type is verified from the file content, not only its name |
 | DELETE | `/courses/:id/sections/:sectionId/lessons/:lessonId/attachments/:attachmentId` | Removes it |
 
 ## Admin: course review
@@ -130,8 +130,7 @@ admins cannot both act on the same course.
 | POST | `/courses/:id/enroll` | Student | Admins and instructors get 403 |
 | GET | `/enrollments/mine` | Student | The student's enrolments with progress |
 | GET | `/enrollments/:courseId` | Student | Progress for one course |
-| GET | `/learn/courses/:id` | Logged in | Full course content (lesson content and attachments). Needs an enrolment, or admin access |
-| POST | `/enrollments/:courseId/lessons/:lessonId/complete` | Student | Marks a lesson complete |
+| GET | `/learn/courses/:id` | Logged in | Full course content with attachments. Allowed for an enrolled student, the owner instructor, or an admin; other users get 403 (and 404 for a course that is not approved) || POST | `/enrollments/:courseId/lessons/:lessonId/complete` | Student | Marks a lesson complete |
 | DELETE | `/enrollments/:courseId/lessons/:lessonId/complete` | Student | Marks it incomplete |
 | PUT | `/enrollments/:courseId/last-lesson` | Student | Body: `lessonId` (valid id). Used to resume |
 | GET | `/enrollments/:courseId/certificate` | Student | Own certificate, once the course is complete |
