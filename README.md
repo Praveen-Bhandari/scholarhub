@@ -85,15 +85,15 @@ node scripts/seed.js
 ```
 
 This creates an admin, instructors, students, courses and enrolments spread over the last 12
-months. Every seeded account uses the password `Seed@12345`:
+months. Demo accounts you can log in with (password `Seed@12345`):
 
 | Role | Email |
 |---|---|
-| Admin | `admin@seed.scholarhub.test` |
 | Instructor | `instructor1@seed.scholarhub.test` |
 | Student | `student1@seed.scholarhub.test` |
 
-To create another admin: `node scripts/createAdmin.js <email> <password>`.
+The seeded admin account exists but is not listed here. To create your own admin locally, run
+`node scripts/createAdmin.js <email> <password>`.
 
 ## Tests
 
