@@ -6,7 +6,7 @@ import type { User } from "@/lib/types";
 
 interface AuthContextValue {
   user: User | null;
-  loading: boolean; // /me ka jawab aane tak true
+  loading: boolean; 
   login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
 }
@@ -17,7 +17,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // page khulte hi: kaun login hai? (cookie browser khud bhejta hai)
   useEffect(() => {
     let cancelled = false;
     api<{ user: User }>("/auth/me")
