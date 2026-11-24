@@ -31,7 +31,6 @@ export default function AdminAnalytics() {
   const [by, setBy] = useState<TopBy>("enrollments");
   const [error, setError] = useState<string | null>(null);
 
-  // overview aur top instructors ek baar
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -51,7 +50,6 @@ export default function AdminAnalytics() {
     };
   }, []);
 
-  // chart: mahino ki sankhya badalne par
   useEffect(() => {
     let cancelled = false;
     api<{ months: MonthPoint[] }>(`/analytics/admin/monthly?months=${months}`)
