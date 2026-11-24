@@ -6,7 +6,6 @@ import RefreshToken from "../models/RefreshToken.js";
 import Review from "../models/Review.js";
 import User from "../models/User.js";
 
-// --all: instructor1, 2, 3@example.com ke saare courses bhi (tumhare haath se bane test courses)
 const all = process.argv.includes("--all");
 
 const TEST_TITLES =
