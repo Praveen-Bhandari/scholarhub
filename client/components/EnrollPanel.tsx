@@ -30,7 +30,6 @@ export default function EnrollPanel({ courseId, price }: { courseId: string; pri
         if (!cancelled) setEnrollment(d.enrollment);
       })
       .catch((e) => {
-        // 404 = abhi enroll nahi kiya, ye theek hai
         if (!(e instanceof ApiError && e.status === 404)) console.error(e);
       })
       .finally(() => {
